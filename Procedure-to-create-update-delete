@@ -1,0 +1,168 @@
+INSERT INTO Customers (Id, FirstName, LastName, PhoneNumber)
+VALUES (1, 'Mirco', 'Perna',  '12345678');
+
+INSERT INTO Customers (Id, FirstName, LastName, PhoneNumber)
+VALUES (2, 'John', 'Doe', '1234567890');
+
+INSERT INTO Customers (Id, FirstName, LastName, PhoneNumber)
+VALUES (3, 'Sarah', 'Johnson', '987654321');
+
+SELECT*
+FROM Customers;
+
+INSERT INTO Roles(Id, Name)
+VALUES  
+  (1, 'Chef di cucina'),
+  (2, 'Chef di pasticceria'),
+  (3, 'Chef di sala'),
+  (4, 'Barista'),
+  (5, 'Cameriere'),
+  (6, 'Sommelier'),
+  (7, 'Responsabile delle forniture'),
+  (8, 'Manager del ristorante'),
+  (9, 'Host/Hostess'),
+  (10, 'Lavapiatti');
+  
+Select *
+FROM Roles;
+
+ALTER TABLE Staff
+MODIFY COLUMN Salary DECIMAL(8, 2);
+
+-- Inserimento di impiegati nella tabella Staff
+INSERT INTO Staff (Id, FirstName, LastName, Salary, Role)
+VALUES
+  (1, 'John', 'Doe', 5000, 1),
+  (2, 'Sarah', 'Johnson', 4000, 3),
+  (3, 'Michael', 'Smith', 3000, 4),
+  (4, 'Emily', 'Davis', 2500, 5);
+  
+SELECT * 
+FROM Staff;
+
+INSERT INTO Staff (Id, FirstName, LastName, Salary, Role)
+VALUES (3, 'Sarah', 'Johnson', '987654321');
+
+
+INSERT INTO Bookings (Id, TableNo, BookingSlot,Customer, Employee)
+VALUES
+(1,5,'2022-10-10',1,4),
+(2,3,'2022-11-12',3,4),
+(3,2,'2022-10-11',2,4),
+(4,2,'2022-10-13',1,4);
+
+SELECT*
+FROM Bookings;
+
+CREATE PROCEDURE CheckBooking(TableNo INT, BookingSlot DateTime )
+SELECT 
+	CASE 
+     WHEN t1.countOrder > 0 then concat('Table ', TableNo, ' is already booked')
+     ELSE concat('Table ', TableNo, ' is not booked')
+     END AS 'Booking status'
+FROM 
+(
+	SELECT COUNT(*) as countOrder
+    FROM Bookings b
+    WHERE b.TableNo = TableNo AND b.BookingSlot = BookingSlot
+) t1;
+
+CALL CheckBooking(7,'2022-10-10');
+
+DELIMITER //
+CREATE PROCEDURE AddBooking(
+	BookingId INT,
+    CustomerId INT,
+    TableNo INT,
+    BookingSlot DATETIME
+    )
+BEGIN
+  DECLARE confirmation_message VARCHAR(255);
+  
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+	BEGIN
+		-- Error handling code
+        SET confirmation_message = 'New booking did not add';
+		SELECT confirmation_message AS message;
+		ROLLBACK;
+	END;
+    
+  START TRANSACTION;
+
+
+  -- Insert values into the table
+	INSERT INTO Bookings (Id, TableNo, BookingSlot,Customer, Employee)
+	VALUES (BookingId, TableNo, BookingSlot,CustomerId, 4);
+
+  SET confirmation_message = 'New booking added';
+  SELECT confirmation_message AS Confirmation;
+END //
+
+DELIMITER ;
+
+
+CALL AddBooking(5,3,3,'2022-11-16');
+
+DELIMITER //
+CREATE PROCEDURE UpdateBooking(
+	BookingId INT,
+    BookingSlot DATETIME
+    )
+BEGIN
+  DECLARE confirmation_message VARCHAR(255);
+  
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+	BEGIN
+		-- Error handling code
+        SET confirmation_message = 'Booking did not update';
+		SELECT confirmation_message AS message;
+		ROLLBACK;
+	END;
+    
+  START TRANSACTION;
+
+
+  -- Update values into the table
+	UPDATE Bookings 
+    SET  BookingSlot = BookingSlot
+	WHERE Id = BookingId;
+
+  SET confirmation_message = 'Booking updated';
+  SELECT confirmation_message AS Confirmation;
+END //
+
+DELIMITER ;
+
+CALL UpdateBooking(5,'2022-11-17');
+
+
+DELIMITER //
+CREATE PROCEDURE DeleteBooking(
+	BookingId INT
+    )
+BEGIN
+  DECLARE confirmation_message VARCHAR(255);
+  
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+	BEGIN
+		-- Error handling code
+        SET confirmation_message = 'Booking did not delete';
+		SELECT confirmation_message AS message;
+		ROLLBACK;
+	END;
+    
+  START TRANSACTION;
+
+
+  -- Update values into the table
+	DELETE FROM Bookings 
+	WHERE Id = BookingId;
+
+  SET confirmation_message = 'Booking deleted';
+  SELECT confirmation_message AS Confirmation;
+END //
+
+DELIMITER ;
+
+CALL DeleteBooking(5);
+
